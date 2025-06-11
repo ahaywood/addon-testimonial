@@ -1,0 +1,55 @@
+model Testimonial {
+  id        String   @id @default(uuid())
+  fullName String
+  email String?
+  company String?
+  jobTitle String?
+  avatar String?
+  rating Int?
+  content String?
+  date DateTime?
+  featured Boolean @default(false)
+  tags TestimonialTag[]
+  sourceId Int
+  source Source @relation(fields: [sourceId], references: [id])
+  statusId Int
+  status Status @relation(fields: [statusId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Account {
+  id        String   @id @default(uuid())
+  notificationEmail String?
+  notifyNewTestimonials Boolean @default(false)
+  notifyWeeklyDigest Boolean @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Source {
+  id Int @id @default(autoincrement())
+  name String
+  testimonials Testimonial[]
+}
+
+model Status {
+  id Int @id @default(autoincrement())
+  name String
+  testimonials Testimonial[]
+}
+
+model Tag {
+  id Int @id @default(autoincrement())
+  name String
+  testimonials TestimonialTag[]
+}
+
+model TestimonialTag {
+  id Int @id @default(autoincrement())
+  testimonialId String
+  testimonial Testimonial @relation(fields: [testimonialId], references: [id])
+  tagId Int
+  tag Tag @relation(fields: [tagId], references: [id])
+}
+

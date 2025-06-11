@@ -1,0 +1,78 @@
+@theme {
+  --font-sans: "Inter", sans-serif;
+  --font-mono: monospace;
+
+  --color-jaffa: "#e47947";
+  --color-mikdado-yellow: #f9c80c;
+  --color-lavender-indigo: "#8d51ff";
+  --color-amaranth: #e93546;
+  --color-dullCyan: #44bbcd;
+  --color-aquamarine-blue: #71e6d4;
+  --color-fern: #70ad6e;
+  --color-eerie-Black: #beed63;
+  --color-green-mist: #c5c393;
+  --color-sasquatch-socks: #ff4d7f;
+  --color-wedgewood: #4c688e;
+  --color-sea-pink: #e37f7c;
+  --color-tundara: #483c46;
+  --color-rose-bud: #f5a698;
+  --color-ash-gray: #b4c2b8;
+  --color-oracle: #3c6e71;
+  --color-camelot: #883a55;
+
+  --color-chart-main: #8e51ff;
+  --color-chart-secondary: #44bbcd;
+
+  --z-index-sheet: 51;
+  /* the overlay is 50, so this needs to be 49 */
+  --z-index-action-bar: 49;
+}
+
+@utility center {
+  @apply flex items-center justify-center;
+}
+
+@utility box {
+  @apply border-1 border-zinc-200 dark:border-zinc-800 rounded-md;
+}
+
+@utility card-title {
+  @apply text-xl font-bold;
+}
+
+@utility size-screen {
+  @apply w-screen h-screen;
+}
+
+@layer testimonials {
+  html,
+  body {
+    @apply font-sans;
+  }
+
+  a,
+  button {
+    @apply cursor-pointer;
+  }
+
+  label {
+    @apply mb-2;
+  }
+
+  .field {
+    @apply mb-3;
+  }
+
+  .page-title {
+    @apply text-2xl font-bold;
+  }
+
+  .section-description,
+  .page-description {
+    @apply text-muted-foreground text-sm;
+  }
+
+  .section-title {
+    @apply uppercase font-mono text-sm font-bold tracking-wider mb-2;
+  }
+}
