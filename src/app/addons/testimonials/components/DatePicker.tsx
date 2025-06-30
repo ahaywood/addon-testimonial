@@ -18,6 +18,7 @@ export function DatePicker({ label, name }: { label: string; name: string }) {
 
   return (
     <div className="flex flex-col gap-1">
+      <input type="hidden" name={name} value={date?.toISOString()} />
       <Label htmlFor={name} className="px-1">
         {label}
       </Label>

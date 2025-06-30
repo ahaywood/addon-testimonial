@@ -1,5 +1,4 @@
 import { ArrowRight, Search } from "lucide-react";
-import { Input } from "@/app/components/ui/input";
 import { StatBlock } from "../../components/StatBlock";
 import { Testimonial } from "../../components/Testimonial";
 import { PageHeader } from "../../components/PageHeader";
@@ -11,34 +10,52 @@ import {
 } from "@/app/components/ui/tabs";
 import { Button } from "@/app/components/ui/button";
 import { namedLink } from "@/app/addons/admin/namedLinks";
+import { db } from "@/db";
+import { NoTestimonials } from "../../components/NoTestimonials";
+import { SearchForm } from "../../components/SearchForm";
 
-const DashboardPage = () => {
+const DashboardPage = async () => {
+  // get all testimonials
+  const testimonials = await db.testimonial.findMany({
+    include: {
+      status: true,
+      tags: {
+        include: {
+          tag: true,
+        },
+      },
+      source: true,
+    },
+  });
+
+  const approvedTestimonials = testimonials.filter(
+    (testimonial) => testimonial.status.name === "Approved"
+  );
+
+  const pendingTestimonials = testimonials.filter(
+    (testimonial) => testimonial.status.name === "Pending"
+  );
+
+  const rejectedTestimonials = testimonials.filter(
+    (testimonial) => testimonial.status.name === "Rejected"
+  );
+
   return (
     <>
       <PageHeader
         className="mb-10"
         title="Dashboard"
-        description="Monitor and manage community ideas, comments, and user activity across all boards"
+        description="Monitor and manage testimonials"
       >
-        <div className="flex items-center gap-2">
-          <Input
-            placeholder="Search"
-            id="search"
-            name="search"
-            className="w-[150px] focus:w-[300px] transition-all duration-500"
-          />
-          <label htmlFor="search" className="cursor-pointer">
-            <Search />
-          </label>
-        </div>
+        <SearchForm />
       </PageHeader>
 
       {/* stat blocks */}
       <div className="flex gap-5 mb-6">
         <StatBlock
-          label="Total Ideas"
-          number="1,289"
-          percentage="+10%"
+          label="Total Testimonials"
+          number={testimonials.length.toString()}
+          percentage="0%"
           description="from last year"
         />
         <StatBlock
@@ -66,33 +83,48 @@ const DashboardPage = () => {
         </TabsList>
         <TabsContent value="all">
           <div className="grid gap-y-3 relative">
-            <Testimonial />
-            <Testimonial />
-            <Testimonial />
-            <Testimonial />
+            {testimonials.length === 0 ? (
+              <NoTestimonials />
+            ) : (
+              testimonials.map((testimonial) => (
+                <Testimonial key={testimonial.id} testimonial={testimonial} />
+              ))
+            )}
           </div>
         </TabsContent>
         <TabsContent value="pending">
           <div className="grid gap-y-3 relative">
-            <Testimonial />
-            <Testimonial />
-            <Testimonial />
-            <Testimonial />
+            {/* filter testimonials to only show pending testimonials */}
+            {pendingTestimonials.length === 0 ? (
+              <NoTestimonials />
+            ) : (
+              pendingTestimonials.map((testimonial) => (
+                <Testimonial key={testimonial.id} testimonial={testimonial} />
+              ))
+            )}
           </div>
         </TabsContent>
         <TabsContent value="approved">
           <div className="grid gap-y-3 relative">
-            <Testimonial />
-            <Testimonial />
-            <Testimonial />
-            <Testimonial />
+            {/* filter testimonials to only show approved testimonials */}
+            {approvedTestimonials.length === 0 ? (
+              <NoTestimonials />
+            ) : (
+              approvedTestimonials.map((testimonial) => (
+                <Testimonial key={testimonial.id} testimonial={testimonial} />
+              ))
+            )}
           </div>
         </TabsContent>
         <TabsContent value="rejected">
           <div className="grid gap-y-3 relative">
-            <Testimonial />
-            <Testimonial />
-            <Testimonial />
+            {rejectedTestimonials.length === 0 ? (
+              <NoTestimonials />
+            ) : (
+              rejectedTestimonials.map((testimonial) => (
+                <Testimonial key={testimonial.id} testimonial={testimonial} />
+              ))
+            )}
           </div>
         </TabsContent>
       </Tabs>

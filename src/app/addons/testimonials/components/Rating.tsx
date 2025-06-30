@@ -4,9 +4,11 @@ import { Star } from "lucide-react";
 import { useState } from "react";
 
 const Rating = ({
+  name,
   defaultRating = 0,
   disabled = false,
 }: {
+  name: string;
   defaultRating?: number;
   disabled?: boolean;
 }) => {
@@ -46,6 +48,7 @@ const Rating = ({
           />
         </button>
       ))}
+      <input type="hidden" name={name} value={rating} />
       <span className="text-xl font-bold pl-3">{rating} / 5</span>
     </div>
   );

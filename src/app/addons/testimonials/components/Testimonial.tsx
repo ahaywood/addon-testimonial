@@ -17,6 +17,7 @@ import {
 import {
   Calendar,
   Check,
+  Clock,
   Ellipsis,
   ExternalLink,
   Pencil,
@@ -25,95 +26,262 @@ import {
   Twitter,
   X,
 } from "lucide-react";
+import { Prisma } from "@generated/prisma";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogTitle,
+  DialogTrigger,
+} from "@/app/components/ui/dialog";
+import { useState } from "react";
+import { toast } from "sonner";
+import {
+  deleteTestimonial,
+  updateFeaturedStatus,
+  updateStatus,
+} from "../lib/actions/Testimonials";
+import { TESTIMONIAL_STATUS } from "../lib/helpers/testimonialStatus";
+import { getSourceIcon } from "../lib/helpers/getSourceIcon";
+import { namedLink } from "../../admin/namedLinks";
 
-const Testimonial = () => {
+type TestimonialType = Prisma.TestimonialGetPayload<{
+  include: {
+    status: true;
+    tags: {
+      include: {
+        tag: true;
+      };
+    };
+    source: true;
+  };
+}>;
+
+const Testimonial = ({ testimonial }: { testimonial: TestimonialType }) => {
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+  const handleDelete = async () => {
+    const result = await deleteTestimonial(testimonial.id);
+
+    if (result.success) {
+      toast.success("Testimonial deleted successfully");
+    } else {
+      toast.error("Failed to delete testimonial");
+    }
+
+    setIsDropdownOpen(false);
+    setIsDeleteModalOpen(false);
+  };
+
+  const handleStatus = async (status: number) => {
+    const result = await updateStatus(testimonial.id, status);
+
+    if (result.success) {
+      toast.success("Testimonial approved successfully");
+    } else {
+      toast.error("Failed to approve testimonial");
+    }
+  };
+
+  const handleFeature = async (status: boolean) => {
+    const result = await updateFeaturedStatus(testimonial.id, status);
+
+    if (result.success) {
+      toast.success("Testimonial featured successfully");
+    } else {
+      toast.error("Failed to feature testimonial");
+    }
+  };
+
   return (
-    <div className="box p-7 relative">
-      <div className="absolute top-2 right-2 flex items-center gap-x-2">
-        <Button variant="ghost">
-          <ExternalLink /> Original
-        </Button>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost">
-              <Ellipsis />
+    <>
+      <div className="box p-7 relative">
+        <div className="absolute top-2 right-2 flex items-center gap-x-2">
+          {testimonial?.url && (
+            <Button variant="ghost" asChild>
+              <a href={testimonial.url} target="_blank">
+                <ExternalLink /> Original
+              </a>
             </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent>
-            <DropdownMenuItem>
-              <Check /> Approve
-            </DropdownMenuItem>
-            <DropdownMenuItem>
-              <X /> Reject
-            </DropdownMenuItem>
-            <DropdownMenuItem>
-              <Star /> Feature
-            </DropdownMenuItem>
-            <DropdownMenuItem>
-              <Pencil /> Edit
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem variant="destructive">
-              <Trash /> Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+          )}
+          <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost">
+                <Ellipsis />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              {testimonial.status?.name !== "Pending" && (
+                <DropdownMenuItem
+                  onClick={() => handleStatus(TESTIMONIAL_STATUS.PENDING)}
+                >
+                  <Clock /> Pending
+                </DropdownMenuItem>
+              )}
+              {testimonial.status?.name !== "Approved" && (
+                <DropdownMenuItem
+                  onClick={() => handleStatus(TESTIMONIAL_STATUS.APPROVED)}
+                >
+                  <Check /> Approve
+                </DropdownMenuItem>
+              )}
+              {testimonial.status?.name !== "Rejected" && (
+                <DropdownMenuItem
+                  onClick={() => handleStatus(TESTIMONIAL_STATUS.REJECTED)}
+                >
+                  <X /> Reject
+                </DropdownMenuItem>
+              )}
+              {testimonial.featured ? (
+                <DropdownMenuItem onClick={() => handleFeature(false)}>
+                  <Star /> Unfeature
+                </DropdownMenuItem>
+              ) : (
+                <DropdownMenuItem onClick={() => handleFeature(true)}>
+                  <Star /> Feature
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuItem asChild>
+                <a href={namedLink("edit", { id: testimonial.id })}>
+                  <Pencil /> Edit
+                </a>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem asChild>
+                <Dialog
+                  open={isDeleteModalOpen}
+                  onOpenChange={setIsDeleteModalOpen}
+                >
+                  <DialogTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      className="text-destructive w-full justify-start"
+                    >
+                      <Trash /> Delete
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogTitle className="text-destructive">
+                      Are you sure you want to delete this testimonial?
+                    </DialogTitle>
+                    <DialogDescription>
+                      This action cannot be undone.
+                    </DialogDescription>
+                    <DialogFooter>
+                      <Button
+                        variant="secondary"
+                        role="secondary"
+                        onClick={() => {
+                          setIsDropdownOpen(false);
+                          setIsDeleteModalOpen(false);
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        onClick={() => handleDelete()}
+                      >
+                        <Trash />
+                        Delete
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+
+        <div className="flex items-center gap-x-4 mb-4">
+          <div>
+            <Avatar className="size-[72px]">
+              <AvatarImage src={testimonial.avatar || ""} />
+              <AvatarFallback>{testimonial.fullName.charAt(0)}</AvatarFallback>
+            </Avatar>
+          </div>
+          <div>
+            <h2 className="font-bold text-xl mb-2">{testimonial.fullName}</h2>
+
+            <p className="text-muted-foreground text-sm">
+              {testimonial.company}{" "}
+              {testimonial.company && testimonial.jobTitle && (
+                <>
+                  <span className="text-muted-foreground">&bull;</span>{" "}
+                  {testimonial.jobTitle}
+                </>
+              )}
+            </p>
+          </div>
+        </div>
+
+        <p className="mb-4">{testimonial.content}</p>
+
+        <div className="flex items-center justify-between text-muted-foreground text-sm">
+          <div className="flex items-center gap-x-2">
+            <Calendar size={16} />
+            {testimonial.date?.toLocaleDateString("en-US", {
+              month: "long",
+              day: "numeric",
+              year: "numeric",
+            })}
+          </div>
+
+          {/* tags */}
+          <div className="flex items-center gap-x-2">
+            {testimonial.tags.map((tagging) => (
+              <Badge
+                key={tagging.id}
+                style={{
+                  backgroundColor: tagging.tag.color || "var(--color-gray-200)",
+                  color: tagging.tag.textColor || "var(--color-gray-800)",
+                }}
+              >
+                {tagging.tag.name}
+              </Badge>
+            ))}
+
+            {testimonial.source?.name &&
+              (() => {
+                const IconComponent = getSourceIcon(testimonial.source.name);
+                return (
+                  <Badge>
+                    <IconComponent size={16} />
+                    {testimonial.source.name}
+                  </Badge>
+                );
+              })()}
+
+            {testimonial.featured && (
+              <Badge className="bg-violet-500 text-white">
+                <Star className="fill-background" />
+                Featured
+              </Badge>
+            )}
+
+            {testimonial.status?.name === "Approved" && (
+              <Badge className="bg-green-600 text-white">
+                <Check /> Approved
+              </Badge>
+            )}
+
+            {testimonial.status?.name === "Pending" && (
+              <Badge className="bg-mikdado-yellow text-black">
+                <Clock /> Pending
+              </Badge>
+            )}
+
+            {testimonial.status?.name === "Rejected" && (
+              <Badge className="bg-amaranth text-white">
+                <X /> Rejected
+              </Badge>
+            )}
+          </div>
+        </div>
       </div>
-
-      <div className="flex items-center gap-x-4 mb-4">
-        <div>
-          <Avatar className="size-[72px]">
-            <AvatarImage src="https://github.com/shadcn.png" />
-            <AvatarFallback>SJ</AvatarFallback>
-          </Avatar>
-        </div>
-        <div>
-          <h2 className="font-bold text-xl mb-2">Sarah Johnson</h2>
-
-          <p className="text-muted-foreground text-sm">
-            RedwoodJS <span className="text-muted-foreground">&bull;</span> Lead
-            Maintainer on the Core Team
-          </p>
-        </div>
-      </div>
-
-      <p className="mb-4">
-        Sit ad mollit aliqua nostrud proident occaecat dolore. Nulla irure et
-        tempor culpa consectetur exercitation cupidatat dolore commodo
-        consectetur sit in. Laboris enim cupidatat nulla eiusmod tempor aute
-        voluptate eiusmod tempor commodo velit sint tempor cillum. Ullamco
-        officia in do culpa mollit esse culpa exercitation culpa. Nostrud esse
-        ad est esse in. Proident Lorem nisi velit incididunt aliqua est est
-        minim ea. Cupidatat cupidatat fugiat consequat mollit enim.
-      </p>
-
-      <div className="flex items-center justify-between text-muted-foreground text-sm">
-        <div className="flex items-center gap-x-2">
-          <Calendar size={16} />
-          June 11, 2025
-        </div>
-
-        <div className="flex items-center gap-x-2">
-          <Badge>Community</Badge>
-          <Badge>DX</Badge>
-
-          <Badge>
-            <Twitter />
-            Twitter
-          </Badge>
-
-          <Badge>
-            <Star className="fill-background" />
-            Featured
-          </Badge>
-
-          <Badge>
-            <Check />
-            Approved
-          </Badge>
-        </div>
-      </div>
-    </div>
+    </>
   );
 };
 

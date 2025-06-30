@@ -24,6 +24,7 @@ const TESTIMONIAL_ROUTES = {
   settings: "/admin/testimonials/settings",
   new: "/admin/testimonials/new",
   edit: "/admin/testimonials/edit",
+  search: "/admin/testimonials/search",
 } as const;
 
 const AUTH_ROUTES = {

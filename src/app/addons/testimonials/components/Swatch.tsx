@@ -1,8 +1,11 @@
 import React from "react";
 
-const Swatch = () => {
+const Swatch = ({ color }: { color: string }) => {
   return (
-    <div className="rounded-full size-4 bg-blue-500 self-start relative top-1"></div>
+    <div
+      className="rounded-full size-4 self-start relative top-1"
+      style={{ backgroundColor: color }}
+    ></div>
   );
 };
 

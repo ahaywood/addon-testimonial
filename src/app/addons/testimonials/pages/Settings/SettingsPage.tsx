@@ -2,8 +2,35 @@ import { RequestInfo } from "rwsdk/worker";
 import { BackButton } from "../../components/BackButton";
 import { ManageNotifications } from "./components/ManageNotifications";
 import { ManageTags } from "./components/ManageTags";
+import { db } from "@/db";
+import { Prisma } from "@generated/prisma";
+
+export type TestimonialTagType = Prisma.TestimonialTagGetPayload<{
+  include: {
+    _count: {
+      select: {
+        testimonials: true;
+      };
+    };
+  };
+}>;
 
 export const SettingsPage = async ({ ctx }: RequestInfo) => {
+  // get all testimonial tags
+  const allTags = await db.testimonialTag.findMany({
+    include: {
+      _count: {
+        select: {
+          testimonials: true,
+        },
+      },
+    },
+  });
+
+  // get the notification settings
+  const notificationSettings = await db.testimonialAccount.findMany();
+  console.log({ notificationSettings });
+
   return (
     <div>
       <BackButton />
@@ -14,9 +41,12 @@ export const SettingsPage = async ({ ctx }: RequestInfo) => {
       </div>
 
       <div className="flex flex-col gap-5">
-        <ManageTags />
+        <ManageTags allTags={allTags} />
 
-        <ManageNotifications />
+        <ManageNotifications
+          notificationSettings={notificationSettings[0]}
+          userId={ctx.user?.id ?? ""}
+        />
       </div>
     </div>
   );

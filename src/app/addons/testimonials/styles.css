@@ -3,12 +3,27 @@
   --font-mono: monospace;
 
   --color-jaffa: "#e47947";
+
   --color-mikdado-yellow: #f9c80c;
+  --color-mikdado-yellow-light: #fcf09d;
+  --color-mikdado-yellow-dark: #704202;
+
   --color-lavender-indigo: "#8d51ff";
+
   --color-amaranth: #e93546;
+  --color-amaranth-light: #facadf;
+  --color-amaranth-dark: #8c141e;
+
   --color-dullCyan: #44bbcd;
+
   --color-aquamarine-blue: #71e6d4;
+  --color-aquamarine-blue-light: #c4f5f0;
+  --color-aquamarine-blue-dark: #288a6b;
+
   --color-fern: #70ad6e;
+  --color-fern-light: #c9debf;
+  --color-fern-dark: #184f17;
+
   --color-eerie-Black: #beed63;
   --color-green-mist: #c5c393;
   --color-sasquatch-socks: #ff4d7f;
@@ -22,6 +37,8 @@
 
   --color-chart-main: #8e51ff;
   --color-chart-secondary: #44bbcd;
+
+  --color-required: var(--color-amaranth);
 
   --z-index-sheet: 51;
   /* the overlay is 50, so this needs to be 49 */

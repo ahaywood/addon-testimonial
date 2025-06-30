@@ -1,0 +1,52 @@
+"use server";
+
+import { db } from "@/db";
+
+export const createTestimonial = async (formData: FormData) => {
+  const fullName = formData.get("fullName") as string;
+  const email = formData.get("email") as string;
+  const company = formData.get("company") as string;
+  const jobTitle = formData.get("jobTitle") as string;
+  const avatar = formData.get("avatar") as string;
+  const rating = formData.get("rating") as string;
+  const sourceId = formData.get("sourceId") as string;
+  const url = formData.get("sourceUrl") as string;
+  const content = formData.get("content") as string;
+  const statusId = formData.get("statusId") as string;
+  const featured = formData.has("featured") as boolean;
+  const date = (formData.get("date") as string) || new Date();
+  const tags = formData.get("tags") as string;
+
+  console.log({ tags });
+
+  try {
+    // format tags
+    const formattedTags = tags.split(",").map((tag) => tag.trim());
+
+    await db.testimonial.create({
+      data: {
+        fullName,
+        email,
+        company,
+        jobTitle,
+        rating: parseInt(rating),
+        sourceId: parseInt(sourceId),
+        url,
+        content,
+        statusId: parseInt(statusId),
+        featured,
+        date,
+        tags: {
+          create: formattedTags.map((tagId) => ({
+            tagId: parseInt(tagId),
+          })),
+        },
+      },
+    });
+  } catch (error) {
+    console.error(error);
+    return { success: false, error: error };
+  }
+
+  return { success: true, error: null };
+};

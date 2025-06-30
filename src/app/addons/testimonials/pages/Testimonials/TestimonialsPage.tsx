@@ -1,18 +1,44 @@
+import { db } from "@/db";
 import { FilterBar } from "../../components/FilterBar";
 import { Testimonial } from "../../components/Testimonial";
+import { SearchForm } from "../../components/SearchForm";
+import { PageHeader } from "../../components/PageHeader";
+import { NoTestimonials } from "../../components/NoTestimonials";
 
-const TestimonialsPage = () => {
+const TestimonialsPage = async () => {
+  // get all testimonials
+  const testimonials = await db.testimonial.findMany({
+    include: {
+      status: true,
+      tags: {
+        include: {
+          tag: true,
+        },
+      },
+      source: true,
+    },
+  });
+
   return (
     <div>
-      <h1 className="page-title">All Testimonials</h1>
-      <p className="page-description mb-10">Manage all the testimonials.</p>
+      <PageHeader
+        className="mb-12"
+        title="All Testimonials"
+        description="Manage all the testimonials."
+      >
+        <SearchForm />
+      </PageHeader>
 
       <div className="grid gap-y-3 relative">
         <FilterBar />
-        <Testimonial />
-        <Testimonial />
-        <Testimonial />
-        <Testimonial />
+
+        {testimonials.length > 0 ? (
+          testimonials.map((testimonial) => (
+            <Testimonial key={testimonial.id} testimonial={testimonial} />
+          ))
+        ) : (
+          <NoTestimonials />
+        )}
       </div>
     </div>
   );

@@ -19,12 +19,14 @@
     "release": "rw-scripts ensure-deploy-env && npm run clean && prisma generate && RWSDK_DEPLOY=1 npm run build && wrangler deploy",
     "migrate:dev": "prisma generate && wrangler d1 migrations apply DB --local",
     "migrate:prd": "wrangler d1 migrations apply DB --remote",
-    "migrate:new": "rw-scripts migrate-new",
+    "migrate:new": "npm run merge && rw-scripts migrate-new",
     "seed": "npm run worker:run ./src/scripts/seed.ts",
+    "seed:testimonials": "npm run worker:run ./src/app/addons/testimonials/db/seed.ts",
     "generate": "rw-scripts ensure-env && prisma generate && wrangler types",
     "check": "npm run generate && npm run types",
     "types": "tsc",
-    "prepare": "vibe-rules install cursor"
+    "prepare": "vibe-rules install cursor",
+    "merge": "node src/scripts/mergePrismaSchema.mjs"
   },
   "dependencies": {
     "@prisma/adapter-d1": "~6.8.2",

@@ -23,7 +23,7 @@ import {
 import { LayoutProps } from "rwsdk/router";
 import { namedLink } from "./namedLinks";
 
-const Layout = ({ children }: LayoutProps) => {
+const Layout = ({ children, requestInfo }: LayoutProps) => {
   return (
     <div className="grid grid-cols-[250px_1fr] size-screen fixed inset-0">
       {/* sidebar */}
@@ -86,11 +86,17 @@ const Layout = ({ children }: LayoutProps) => {
                 <div>
                   <Avatar>
                     <AvatarImage src="https://github.com/shadcn.png" />
-                    <AvatarFallback className="bg-violet-500">A</AvatarFallback>
+                    <AvatarFallback className="bg-violet-500">
+                      {requestInfo?.ctx?.user?.username
+                        ?.charAt(0)
+                        .toUpperCase()}
+                    </AvatarFallback>
                   </Avatar>
                 </div>
 
-                <div className="font-bold flex-1 text-left">Amy Dutton</div>
+                <div className="font-bold flex-1 text-left">
+                  {requestInfo?.ctx?.user?.username}
+                </div>
                 <Ellipsis />
               </Button>
             </DropdownMenuTrigger>

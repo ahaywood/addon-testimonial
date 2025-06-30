@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { Settings, X } from "lucide-react";
+import { useEffect } from "react";
 
 import { Button } from "@/app/components/ui/button";
 import {
@@ -20,18 +21,23 @@ import {
 import { Badge } from "@/app/components/ui/badge";
 import { Checkbox } from "@/app/components/ui/checkbox";
 
+type MultiSelectComboboxItem = {
+  value: string;
+  label: string;
+  color?: string;
+  textColor?: string;
+};
+
 export function MultiSelectCombobox({
   data,
+  name,
   label,
   placeholder = "",
   notFoundMessage = "", // this is displayed when the combobox search is empty
   emptyMessage = "", // this is displayed the combobox if it is empty
 }: {
-  data: {
-    value: string;
-    label: string;
-    color?: string;
-  }[];
+  data: MultiSelectComboboxItem[];
+  name: string;
   label: string;
   placeholder?: string;
   notFoundMessage?: string;
@@ -40,8 +46,22 @@ export function MultiSelectCombobox({
   const [open, setOpen] = React.useState(false);
   const [value, setValue] = React.useState<string[]>([]);
 
+  useEffect(() => {
+    console.log(value);
+  }, [value]);
+
+  // convert the data to make it easier to use
+  const colorMap = data.reduce(
+    (acc: Record<string, MultiSelectComboboxItem>, item) => {
+      acc[item.value] = item;
+      return acc;
+    },
+    {}
+  );
+
   return (
     <div className="flex flex-col gap-0 w-full">
+      <input type="hidden" name={name} value={value.join(",")} />
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button
@@ -79,7 +99,10 @@ export function MultiSelectCombobox({
                         checked={value.includes(item.value)}
                         className="dark:border-zinc-500"
                       />
-                      <div className="rounded-full size-3 bg-red-500" />
+                      <div
+                        className="rounded-full size-3"
+                        style={{ backgroundColor: item.color }}
+                      />
                       {item.label}
                     </CommandItem>
                   ))}
@@ -92,8 +115,14 @@ export function MultiSelectCombobox({
       <div className="flex gap-2 flex-wrap">
         {value.length > 0 ? (
           value.map((item) => (
-            <Badge key={item}>
-              {data.find((i) => i.value === item)?.label}
+            <Badge
+              key={item}
+              style={{
+                backgroundColor: colorMap[item].color,
+                color: colorMap[item].textColor,
+              }}
+            >
+              {colorMap[item].label}
               <button
                 role="button"
                 onClick={() => {

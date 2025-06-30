@@ -33,5 +33,11 @@
       "database_name": "__change_me__",
       "database_id": "__change_me__"
     }
+  ],
+  "r2_buckets": [
+    {
+      "bucket_name": "testimonials-addon",
+      "binding": "testimonials_addon"
+    }
   ]
 }

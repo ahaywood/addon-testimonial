@@ -1,0 +1,438 @@
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+
+// Get the directory name using ES modules approach
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Define the source directories and target file
+const SCHEMA_DIR = path.resolve(__dirname, "../../prisma/schema");
+const APP_DIR = path.resolve(__dirname, "../../src/app");
+const TARGET_FILE = path.resolve(__dirname, "../../prisma/schema.prisma");
+// Use the schema directory for backup but with a .bak extension to avoid conflicts with Prisma
+const SCHEMA_BACKUP_FILE = path.resolve(
+  __dirname,
+  "../../prisma/schema/schema.prisma.bak"
+);
+
+// Main function to merge schema files
+async function mergePrismaSchemas() {
+  try {
+    console.log("🚀 Starting Prisma schema merge...");
+
+    // Check if the target file exists and if so, backup to schema directory if backup file doesn't exist
+    if (fs.existsSync(TARGET_FILE)) {
+      // Check if schema directory exists, if not create it
+      if (!fs.existsSync(SCHEMA_DIR)) {
+        fs.mkdirSync(SCHEMA_DIR, { recursive: true });
+        console.log(`📁 Created schema directory: ${SCHEMA_DIR}`);
+      }
+
+      // Only copy to schema backup if the backup file doesn't already exist
+      if (!fs.existsSync(SCHEMA_BACKUP_FILE)) {
+        fs.copyFileSync(TARGET_FILE, SCHEMA_BACKUP_FILE);
+        console.log(`📋 Backed up existing schema to ${SCHEMA_BACKUP_FILE}`);
+      } else {
+        console.log(
+          `ℹ️ Schema backup already exists at ${SCHEMA_BACKUP_FILE}, skipping backup`
+        );
+      }
+    }
+
+    // Read all .prisma files from the schema directory
+    const schemaFilesFromSchemaDir = fs.existsSync(SCHEMA_DIR)
+      ? fs
+          .readdirSync(SCHEMA_DIR)
+          .filter((file) => file.endsWith(".prisma"))
+          .map((file) => path.join(SCHEMA_DIR, file))
+      : [];
+
+    // Find all .prisma files recursively in the app directory
+    const schemaFilesFromAppDir = findPrismaFilesRecursively(APP_DIR);
+
+    // Read the backup file if it exists
+    let backupFileContent = null;
+    if (fs.existsSync(SCHEMA_BACKUP_FILE)) {
+      backupFileContent = fs.readFileSync(SCHEMA_BACKUP_FILE, "utf8");
+      console.log(`📄 Reading backup file: ${SCHEMA_BACKUP_FILE}`);
+    }
+
+    // Combine all schema files
+    const schemaFiles = [...schemaFilesFromSchemaDir, ...schemaFilesFromAppDir];
+
+    console.log(`📁 Found ${schemaFiles.length} schema files to merge`);
+
+    // Initialize containers for different schema sections
+    const generators = [];
+    const datasources = [];
+    const models = [];
+    const enums = [];
+
+    // Process each schema file
+    for (const file of schemaFiles) {
+      console.log(`📄 Processing ${file}...`);
+      const content = fs.readFileSync(file, "utf8");
+
+      // Extract different sections using regex - enhanced to capture comments
+      extractSection(content, /generator\s+\w+\s+{[^}]*}/gs, generators);
+      extractSection(content, /datasource\s+\w+\s+{[^}]*}/gs, datasources);
+      // Use dedicated function for models to handle nested braces properly
+      extractModelsWithComments(content, models);
+      extractSection(content, /enum\s+\w+\s+{[^}]*}/gs, enums);
+
+      // Also look for commented model sections that might be intended as additions
+      const commentedModelAdditions = content.match(
+        /\/\*\*[\s\S]*?ADD TO (\w+) MODEL[\s\S]*?\*\/([\s\S]*?)(\*\/|$)/g
+      );
+      if (commentedModelAdditions) {
+        for (const addition of commentedModelAdditions) {
+          const modelNameMatch = addition.match(/ADD TO (\w+) MODEL/);
+          if (modelNameMatch && modelNameMatch[1]) {
+            const targetModel = modelNameMatch[1];
+            const fieldLines = addition
+              .replace(/\/\*\*[\s\S]*?\*\//, "") // Remove the comment markers
+              .replace(/model\s+\w+\s+{/, "") // Remove any model declaration
+              .replace(/}/, "") // Remove closing brace
+              .trim();
+
+            // Store this to be added to the appropriate model later
+            console.log(`Found additions for model ${targetModel}`);
+            processModelAdditions(models, targetModel, fieldLines);
+          }
+        }
+      }
+    }
+
+    // Process the backup file if it exists
+    if (backupFileContent) {
+      console.log(`📄 Processing backup file content...`);
+
+      // Extract different sections from the backup file
+      extractSection(
+        backupFileContent,
+        /generator\s+\w+\s+{[^}]*}/gs,
+        generators
+      );
+      extractSection(
+        backupFileContent,
+        /datasource\s+\w+\s+{[^}]*}/gs,
+        datasources
+      );
+      // Use dedicated function for models to handle nested braces properly
+      extractModelsWithComments(backupFileContent, models);
+      extractSection(backupFileContent, /enum\s+\w+\s+{[^}]*}/gs, enums);
+
+      // Also look for commented model sections that might be intended as additions in the backup file
+      const commentedModelAdditions = backupFileContent.match(
+        /\/\*\*[\s\S]*?ADD TO (\w+) MODEL[\s\S]*?\*\/([\s\S]*?)(\*\/|$)/g
+      );
+      if (commentedModelAdditions) {
+        for (const addition of commentedModelAdditions) {
+          const modelNameMatch = addition.match(/ADD TO (\w+) MODEL/);
+          if (modelNameMatch && modelNameMatch[1]) {
+            const targetModel = modelNameMatch[1];
+            const fieldLines = addition
+              .replace(/\/\*\*[\s\S]*?\*\//, "") // Remove the comment markers
+              .replace(/model\s+\w+\s+{/, "") // Remove any model declaration
+              .replace(/}/, "") // Remove closing brace
+              .trim();
+
+            // Store this to be added to the appropriate model later
+            console.log(
+              `Found additions for model ${targetModel} in backup file`
+            );
+            processModelAdditions(models, targetModel, fieldLines);
+          }
+        }
+      }
+    }
+
+    // Deduplicate sections (keep only unique generators, datasources, and models)
+    const uniqueGenerators = deduplicateSections(generators);
+    const uniqueDatasources = deduplicateSections(datasources);
+    const uniqueModels = deduplicateModels(models);
+
+    // Sort models alphabetically by name
+    const sortedModels = uniqueModels.sort((a, b) => {
+      const nameA = a.match(/model\s+(\w+)\s+{/)?.[1] || "";
+      const nameB = b.match(/model\s+(\w+)\s+{/)?.[1] || "";
+      return nameA.localeCompare(nameB);
+    });
+
+    // Add empty lines between models for better readability
+    const modelsWithSpacing = [];
+    sortedModels.forEach((model, index) => {
+      modelsWithSpacing.push(model);
+      // Add an empty line after each model except the last one
+      if (index < sortedModels.length - 1) {
+        modelsWithSpacing.push("");
+      }
+    });
+
+    // Combine all sections into the final schema
+    const finalSchema = [
+      "// This is your Prisma schema file,",
+      "// learn more about it in the docs: https://pris.ly/d/prisma-schema",
+      "",
+      "// This file was automatically generated by the schema merge script",
+      "// Last merged: " + new Date().toISOString(),
+      "",
+      ...uniqueGenerators,
+      "",
+      ...uniqueDatasources,
+      "",
+      ...enums,
+      "",
+      ...modelsWithSpacing,
+    ].join("\n");
+
+    // Write the merged schema to the target file
+    fs.writeFileSync(TARGET_FILE, finalSchema);
+
+    console.log(`✅ Successfully merged schema files into ${TARGET_FILE}`);
+  } catch (error) {
+    console.error("Error merging schema files:", error);
+    process.exit(1);
+  }
+}
+
+// Helper function to extract sections using regex
+function extractSection(content, pattern, container) {
+  const matches = content.match(pattern);
+  if (matches) {
+    matches.forEach((match) => {
+      // Don't remove comments - keep them as they're part of the schema
+      const cleanedMatch = match.trim();
+      if (cleanedMatch) {
+        container.push(cleanedMatch);
+      }
+    });
+  }
+}
+
+// Helper function to process model additions from commented sections
+function processModelAdditions(models, targetModelName, fieldLines) {
+  // Find the target model in the existing models array
+  for (let i = 0; i < models.length; i++) {
+    if (models[i].startsWith(`model ${targetModelName} {`)) {
+      // Insert the new fields before the closing brace
+      models[i] = models[i].replace(
+        /}(\s*)$/,
+        `  // Fields added from other schema files\n  ${fieldLines.trim()}\n}$1`
+      );
+      return;
+    }
+  }
+
+  console.warn(
+    `⚠️ Warning: Target model ${targetModelName} not found for additions`
+  );
+}
+
+// Helper function to deduplicate sections (like generators and datasources)
+function deduplicateSections(sections) {
+  const uniqueSections = new Map();
+
+  for (const section of sections) {
+    // Extract the section name (e.g., "client" from "generator client")
+    const nameMatch = section.match(/(?:generator|datasource)\s+(\w+)/);
+    if (nameMatch && nameMatch[1]) {
+      const name = nameMatch[1];
+      // Only keep one instance of each named section
+      if (!uniqueSections.has(name)) {
+        uniqueSections.set(name, section);
+      }
+    }
+  }
+
+  return Array.from(uniqueSections.values());
+}
+
+// Helper function to deduplicate models and merge their fields
+function deduplicateModels(models) {
+  const modelMap = new Map();
+
+  for (const modelDef of models) {
+    // Extract the model name
+    const modelNameMatch = modelDef.match(/model\s+(\w+)\s+{/);
+    if (modelNameMatch && modelNameMatch[1]) {
+      const modelName = modelNameMatch[1];
+
+      if (!modelMap.has(modelName)) {
+        // First time seeing this model, add it to the map
+        modelMap.set(modelName, modelDef);
+      } else {
+        // We've seen this model before, need to merge fields
+        console.log(
+          `🔄 Found duplicate model: ${modelName}, merging fields...`
+        );
+
+        // Get existing model definition
+        const existingModel = modelMap.get(modelName);
+
+        // Extract fields from both models
+        const existingFieldsMatch = existingModel.match(
+          /model\s+\w+\s+{([\s\S]*)}/
+        );
+        const newFieldsMatch = modelDef.match(/model\s+\w+\s+{([\s\S]*)}/);
+
+        if (
+          existingFieldsMatch &&
+          existingFieldsMatch[1] &&
+          newFieldsMatch &&
+          newFieldsMatch[1]
+        ) {
+          // Parse fields into individual lines for comparison
+          const existingFieldLines = existingFieldsMatch[1]
+            .trim()
+            .split("\n")
+            .map((line) => line.trim())
+            .filter((line) => line.length > 0);
+
+          const newFieldLines = newFieldsMatch[1]
+            .trim()
+            .split("\n")
+            .map((line) => line.trim())
+            .filter((line) => line.length > 0);
+
+          // Find unique new fields that don't exist in the existing model
+          const uniqueNewFields = [];
+
+          for (const newLine of newFieldLines) {
+            // Extract field name from the line
+            const fieldNameMatch = newLine.match(/^\s*(\w+)\s/);
+            if (!fieldNameMatch) continue;
+
+            const fieldName = fieldNameMatch[1];
+
+            // Check if this field already exists in the existing model
+            const fieldExists = existingFieldLines.some((existingLine) => {
+              const existingFieldMatch = existingLine.match(/^\s*(\w+)\s/);
+              return existingFieldMatch && existingFieldMatch[1] === fieldName;
+            });
+
+            if (!fieldExists) {
+              uniqueNewFields.push(newLine);
+            }
+          }
+
+          if (uniqueNewFields.length > 0) {
+            // Add only unique fields to the existing model
+            const mergedModel = existingModel.replace(
+              /}(\s*)$/,
+              `  // Fields merged from another schema file\n  ${uniqueNewFields.join(
+                "\n  "
+              )}\n}$1`
+            );
+
+            modelMap.set(modelName, mergedModel);
+          }
+        }
+      }
+    }
+  }
+
+  return Array.from(modelMap.values());
+}
+
+// Helper function to find .prisma files recursively in a directory
+function findPrismaFilesRecursively(dir) {
+  let results = [];
+  if (!fs.existsSync(dir)) return results;
+
+  const list = fs.readdirSync(dir);
+
+  list.forEach((file) => {
+    const filePath = path.join(dir, file);
+    const stat = fs.statSync(filePath);
+
+    if (stat.isDirectory()) {
+      // Recursively search subdirectories
+      results = results.concat(findPrismaFilesRecursively(filePath));
+    } else if (file.endsWith(".prisma")) {
+      // Add .prisma files to the results
+      results.push(filePath);
+    }
+  });
+
+  return results;
+}
+
+// Helper function to extract models with their preceding comments
+function extractModelsWithComments(content, container) {
+  // Split content into lines for processing
+  const lines = content.split("\n");
+  let i = 0;
+
+  while (i < lines.length) {
+    const line = lines[i].trim();
+
+    // Check if this line starts a model definition
+    if (line.match(/^model\s+\w+\s+{/)) {
+      // Collect any preceding comment lines
+      let commentLines = [];
+      let j = i - 1;
+
+      // Look backwards for comments (/// or /* */)
+      while (j >= 0) {
+        const prevLine = lines[j].trim();
+        if (
+          prevLine.startsWith("///") ||
+          prevLine.match(/^\/\*/) ||
+          prevLine.match(/^\*/) ||
+          prevLine === ""
+        ) {
+          if (prevLine !== "") {
+            commentLines.unshift(lines[j]);
+          }
+          j--;
+        } else {
+          break;
+        }
+      }
+
+      // Now extract the complete model definition
+      let modelLines = [];
+      let braceCount = 0;
+      let modelStarted = false;
+
+      while (i < lines.length) {
+        const currentLine = lines[i];
+        modelLines.push(currentLine);
+
+        // Count braces to find the end of the model
+        for (const char of currentLine) {
+          if (char === "{") {
+            braceCount++;
+            modelStarted = true;
+          } else if (char === "}") {
+            braceCount--;
+          }
+        }
+
+        i++;
+
+        // If we've closed all braces, we're done with this model
+        if (modelStarted && braceCount === 0) {
+          break;
+        }
+      }
+
+      // Combine comments and model definition
+      const fullModelDefinition = [...commentLines, ...modelLines]
+        .join("\n")
+        .trim();
+      if (fullModelDefinition) {
+        container.push(fullModelDefinition);
+      }
+    } else {
+      i++;
+    }
+  }
+}
+
+// Run the script
+mergePrismaSchemas()
+  .then(() => console.log("🎉 Schema merge completed"))
+  .catch((err) => console.error("❌ Schema merge failed:", err));

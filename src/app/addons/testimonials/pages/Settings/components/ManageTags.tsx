@@ -7,10 +7,13 @@ import { AnimatePresence, motion } from "motion/react";
 import { Button } from "@/app/components/ui/button";
 import { AddTag } from "./AddTag";
 import { useLocalStorageState } from "../../../lib/hooks/useLocalStorageState";
+import { TestimonialTagType } from "../SettingsPage";
 
-const ManageTags = () => {
+const ManageTags = ({ allTags }: { allTags: TestimonialTagType[] }) => {
   const [isOpen, setIsOpen] = useLocalStorageState("manageTags-isOpen", true);
   const [isAddWindowOpen, setIsAddWindowOpen] = useState(false);
+
+  console.log(allTags);
 
   return (
     <section className="box p-5">
@@ -31,8 +34,7 @@ const ManageTags = () => {
             </h2>
           </button>
           <p className="section-description">
-            Organize feedback into different boards or categories. Users can
-            submit feedback to specific boards.
+            Organize testimonials with tags.
           </p>
         </div>
         <div>
@@ -70,9 +72,9 @@ const ManageTags = () => {
                   </motion.div>
                 )}
               </AnimatePresence>
-              <TagBlock />
-              <TagBlock />
-              <TagBlock />
+              {allTags.map((tag) => (
+                <TagBlock key={tag.id} tag={tag} />
+              ))}
             </div>
           </motion.div>
         )}

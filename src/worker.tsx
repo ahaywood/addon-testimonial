@@ -21,6 +21,15 @@ export type AppContext = {
   user: User | null;
 };
 
+export const isAuthenticated = ({ ctx }: { ctx: AppContext }) => {
+  if (!ctx.user) {
+    return new Response(null, {
+      status: 302,
+      headers: { Location: "/user/login" },
+    });
+  }
+};
+
 export default defineApp([
   setCommonHeaders(),
   async ({ ctx, request, headers }) => {
@@ -70,9 +79,9 @@ export default defineApp([
         headers: { Location: "/admin/testimonials" },
       });
     }),
+    prefix("/user", userRoutes),
     layout(AdminLayout, [
-      prefix("/user", userRoutes),
-      prefix("/admin/testimonials", testimonialAdminRoutes),
+      prefix("/admin/testimonials", [testimonialAdminRoutes]),
     ]),
     prefix("/testimonials", testimonialPublicRoutes),
   ]),

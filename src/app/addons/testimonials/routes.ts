@@ -7,6 +7,7 @@ import { NewPage } from "./pages/New/NewPage";
 import { Layout } from "./pages/Layout";
 import { WallPage } from "./pages/Wall/WallPage";
 import { EditPage } from "./pages/Edit/EditPage";
+import { SearchPage } from "./pages/Search/SearchPage";
 
 export const adminRoutes = layout(Layout, [
   route("/", DashboardPage),
@@ -14,6 +15,7 @@ export const adminRoutes = layout(Layout, [
   route("/edit", EditPage),
   route("/all", TestimonialsPage),
   route("/settings", SettingsPage),
+  route("/search", SearchPage),
 ]);
 
 export const publicRoutes = [
