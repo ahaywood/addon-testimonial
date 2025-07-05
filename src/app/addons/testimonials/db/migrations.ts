@@ -86,22 +86,20 @@ export const migrations = {
           .execute(),
 
         await db.schema
+          .alterTable("testimonial_taggings")
+          .addUniqueConstraint("testimonial_tag_unique", [
+            "testimonialId",
+            "tagId",
+          ])
+          .execute(),
+
+        await db.schema
           .createTable("users")
           .addColumn("id", "text", (col) => col.primaryKey())
           .addColumn("createdAt", "text", (col) => col.notNull())
           .addColumn("updatedAt", "text", (col) => col.notNull())
           .execute(),
       ];
-
-      // workaround(justinvdm, 2025-07-02): rwsdk/db's type inference does not
-      // include original methods on kysely builder classes, workaround until this is fixed
-      await (db as Kysely<any>).schema
-        .alterTable("testimonial_taggings")
-        .addUniqueConstraint("testimonial_tag_unique", [
-          "testimonialId",
-          "tagId",
-        ])
-        .execute();
 
       return schema;
     },
