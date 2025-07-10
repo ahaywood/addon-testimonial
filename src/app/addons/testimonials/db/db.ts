@@ -4,7 +4,7 @@ import debug from "rwsdk/debug";
 import { type Database, createDb } from "rwsdk/db";
 import { migrations } from "./migrations";
 
-const log = debug("passkey:db");
+const log = debug("testimonials:db");
 
 export type TestimonialsDatabase = Database<typeof migrations>;
 
@@ -20,3 +20,7 @@ export const db = createDb<TestimonialsDatabase>(
   env.TESTIMONIALS_DURABLE_OBJECT,
   "testimonials-main"
 );
+
+export async function getAllTestimonials() {
+  return await db.selectFrom("testimonials").selectAll().execute();
+}

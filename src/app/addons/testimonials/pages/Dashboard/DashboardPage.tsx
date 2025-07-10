@@ -10,35 +10,39 @@ import {
 } from "@/app/components/ui/tabs";
 import { Button } from "@/app/components/ui/button";
 import { namedLink } from "@/app/addons/admin/namedLinks";
-import { db } from "@/db";
+// import { db } from "@/db";
 import { NoTestimonials } from "../../components/NoTestimonials";
 import { SearchForm } from "../../components/SearchForm";
+import { getAllTestimonials } from "../../db/db";
 
 const DashboardPage = async () => {
   // get all testimonials
-  const testimonials = await db.testimonial.findMany({
-    include: {
-      status: true,
-      tags: {
-        include: {
-          tag: true,
-        },
-      },
-      source: true,
-    },
-  });
+  const testimonials = await getAllTestimonials();
+  console.log({ testimonials });
 
-  const approvedTestimonials = testimonials.filter(
-    (testimonial) => testimonial.status.name === "Approved"
-  );
+  // const testimonials = await db.testimonial.findMany({
+  //   include: {
+  //     status: true,
+  //     tags: {
+  //       include: {
+  //         tag: true,
+  //       },
+  //     },
+  //     source: true,
+  //   },
+  // });
 
-  const pendingTestimonials = testimonials.filter(
-    (testimonial) => testimonial.status.name === "Pending"
-  );
+  // const approvedTestimonials = testimonials.filter(
+  //   (testimonial) => testimonial.status.name === "Approved"
+  // );
 
-  const rejectedTestimonials = testimonials.filter(
-    (testimonial) => testimonial.status.name === "Rejected"
-  );
+  // const pendingTestimonials = testimonials.filter(
+  //   (testimonial) => testimonial.status.name === "Pending"
+  // );
+
+  // const rejectedTestimonials = testimonials.filter(
+  //   (testimonial) => testimonial.status.name === "Rejected"
+  // );
 
   return (
     <>
@@ -52,12 +56,12 @@ const DashboardPage = async () => {
 
       {/* stat blocks */}
       <div className="flex gap-5 mb-6">
-        <StatBlock
+        {/* <StatBlock
           label="Total Testimonials"
           number={testimonials.length.toString()}
           percentage="0%"
           description="from last year"
-        />
+        /> */}
         <StatBlock
           label="Comments"
           number="10"
@@ -82,7 +86,7 @@ const DashboardPage = async () => {
           <TabsTrigger value="rejected">Rejected</TabsTrigger>
         </TabsList>
         <TabsContent value="all">
-          <div className="grid gap-y-3 relative">
+          {/* <div className="grid gap-y-3 relative">
             {testimonials.length === 0 ? (
               <NoTestimonials />
             ) : (
@@ -90,41 +94,41 @@ const DashboardPage = async () => {
                 <Testimonial key={testimonial.id} testimonial={testimonial} />
               ))
             )}
-          </div>
+          </div> */}
         </TabsContent>
         <TabsContent value="pending">
           <div className="grid gap-y-3 relative">
             {/* filter testimonials to only show pending testimonials */}
-            {pendingTestimonials.length === 0 ? (
+            {/* {pendingTestimonials.length === 0 ? (
               <NoTestimonials />
             ) : (
               pendingTestimonials.map((testimonial) => (
                 <Testimonial key={testimonial.id} testimonial={testimonial} />
               ))
-            )}
+            )} */}
           </div>
         </TabsContent>
         <TabsContent value="approved">
           <div className="grid gap-y-3 relative">
             {/* filter testimonials to only show approved testimonials */}
-            {approvedTestimonials.length === 0 ? (
+            {/* {approvedTestimonials.length === 0 ? (
               <NoTestimonials />
             ) : (
               approvedTestimonials.map((testimonial) => (
                 <Testimonial key={testimonial.id} testimonial={testimonial} />
               ))
-            )}
+            )} */}
           </div>
         </TabsContent>
         <TabsContent value="rejected">
           <div className="grid gap-y-3 relative">
-            {rejectedTestimonials.length === 0 ? (
+            {/* {rejectedTestimonials.length === 0 ? (
               <NoTestimonials />
             ) : (
               rejectedTestimonials.map((testimonial) => (
                 <Testimonial key={testimonial.id} testimonial={testimonial} />
               ))
-            )}
+            )} */}
           </div>
         </TabsContent>
       </Tabs>

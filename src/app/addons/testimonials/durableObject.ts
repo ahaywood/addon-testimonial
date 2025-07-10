@@ -1,4 +1,4 @@
-import { TestimonialsDatabase } from "./db/db";
+import { type TestimonialsDatabase } from "./db/db";
 import { migrations as testimonialsMigrations } from "./db/migrations";
 import { SqliteDurableObject } from "rwsdk/db";
 

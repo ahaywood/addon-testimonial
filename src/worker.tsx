@@ -15,6 +15,7 @@ import {
 import { Layout as AdminLayout } from "@/app/addons/admin/Layout";
 
 export { SessionDurableObject } from "./session/durableObject";
+export { TestimonialsDurableObject } from "./app/addons/testimonials/durableObject";
 
 export type AppContext = {
   session: Session | null;

@@ -37,7 +37,7 @@ model Credential {
   credentialId  String   @unique // WebAuthn credential identifier
   publicKey     Bytes
   counter       Int      @default(0)
-  
+
   @@index([credentialId])
   @@index([userId])
 }

@@ -5,7 +5,8 @@
   "compatibility_date": "2024-09-23",
   "compatibility_flags": ["nodejs_compat"],
   "assets": {
-    "binding": "ASSETS"
+    "binding": "ASSETS",
+    "directory": "public"
   },
   "observability": {
     "enabled": true
@@ -23,12 +24,15 @@
     ]
   },
   "vars": {
-    "WEBAUTHN_APP_NAME": "__change_me__"
+    "WEBAUTHN_APP_NAME": "testimonials-addon"
   },
   "migrations": [
     {
       "tag": "v1",
-      "new_sqlite_classes": ["SessionDurableObject"]
+      "new_sqlite_classes": [
+        "SessionDurableObject",
+        "TestimonialsDurableObject"
+      ]
     }
   ],
   "d1_databases": [
