@@ -1,54 +1,46 @@
 import { defineScript } from "rwsdk/worker";
-import { db, setupDb } from "@/db";
-import { env } from "cloudflare:workers";
+import { getDb } from "./db";
 
 export default defineScript(async () => {
-  await setupDb(env);
+  const db = await getDb();
 
   // clean out the database
-  await db.$executeRawUnsafe(`\
-    DELETE FROM TestimonialAccount;
-    DELETE FROM TestimonialSource;
-    DELETE FROM TestimonialStatus;
-    DELETE FROM TestimonialTag;
-    DELETE FROM Testimonial;
-    DELETE FROM TestimonialTagging;
-    DELETE FROM sqlite_sequence;
-  `);
+  await db.deleteFrom("testimonials").execute();
+  await db.deleteFrom("testimonial_settings").execute();
+  await db.deleteFrom("testimonial_sources").execute();
+  await db.deleteFrom("testimonial_stats").execute();
+  await db.deleteFrom("testimonial_statuses").execute();
+  await db.deleteFrom("testimonial_tags").execute();
+  await db.deleteFrom("testimonial_taggings").execute();
+  await db.deleteFrom("users").execute();
 
   // set the initial sources
-  await db.testimonialSource.createMany({
-    data: [
-      { name: "Website" },
-      { name: "Email" },
-      { name: "YouTube" },
-      { name: "Discord" },
-      { name: "Twitter/X" },
-      { name: "BlueSky" },
-      { name: "Instagram" },
-      { name: "LinkedIn" },
-      { name: "TikTok" },
-      { name: "Reddit" },
-    ],
-  });
+  await db.insertInto("testimonial_sources").values([
+    { id: 1, name: "Website" },
+    { id: 2, name: "Email" },
+    { id: 3, name: "YouTube" },
+    { id: 4, name: "Discord" },
+    { id: 5, name: "Twitter/X" },
+    { id: 6, name: "BlueSky" },
+    { id: 7, name: "Instagram" },
+    { id: 8, name: "LinkedIn" },
+    { id: 9, name: "TikTok" },
+    { id: 10, name: "Reddit" },
+  ]);
 
   // set the testimonial status
-  await db.testimonialStatus.createMany({
-    data: [
-      { id: 1, name: "Approved" },
-      { id: 2, name: "Rejected" },
-      { id: 3, name: "Pending" },
-    ],
-  });
+  await db.insertInto("testimonial_statuses").values([
+    { id: 1, name: "Approved" },
+    { id: 2, name: "Rejected" },
+    { id: 3, name: "Pending" },
+  ]);
 
   // create some basic tags
-  await db.testimonialTag.createMany({
-    data: [
-      { id: 1, name: "Community", color: "#e47947", textColor: "#fff" },
-      { id: 2, name: "Docs", color: "#f9c80c", textColor: "#000" },
-      { id: 3, name: "DX", color: "#8d51ff", textColor: "#fff" },
-    ],
-  });
+  await db.insertInto("testimonial_tags").values([
+    { id: 1, name: "Community", color: "#e47947", textColor: "#fff" },
+    { id: 2, name: "Docs", color: "#f9c80c", textColor: "#000" },
+    { id: 3, name: "DX", color: "#8d51ff", textColor: "#fff" },
+  ]);
 
   console.log("🌱 Finished seeding");
 });

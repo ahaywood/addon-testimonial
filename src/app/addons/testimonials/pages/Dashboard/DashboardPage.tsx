@@ -13,36 +13,69 @@ import { namedLink } from "@/app/addons/admin/namedLinks";
 // import { db } from "@/db";
 import { NoTestimonials } from "../../components/NoTestimonials";
 import { SearchForm } from "../../components/SearchForm";
-import { getAllTestimonials } from "../../db/db";
+import { getAllTestimonials, getDb } from "../../db/db";
 
 const DashboardPage = async () => {
   // get all testimonials
-  const testimonials = await getAllTestimonials();
+  const db = await getDb();
+  const testimonials = await db
+    .selectFrom("testimonials")
+    .leftJoin(
+      "testimonial_sources",
+      "testimonials.sourceId",
+      "testimonial_sources.id"
+    )
+    .leftJoin(
+      "testimonial_statuses",
+      "testimonials.statusId",
+      "testimonial_statuses.id"
+    )
+    .leftJoin(
+      "testimonial_taggings",
+      "testimonials.id",
+      "testimonial_taggings.testimonialId"
+    )
+    .leftJoin(
+      "testimonial_tags",
+      "testimonial_taggings.tagId",
+      "testimonial_tags.id"
+    )
+    .select([
+      "testimonials.id",
+      "testimonials.fullName",
+      "testimonials.email",
+      "testimonials.company",
+      // "testimonials.jobTitle",
+      "testimonials.avatar",
+      "testimonials.rating",
+      "testimonials.content",
+      "testimonials.date",
+      // "testimonials.featured",
+      "testimonials.url",
+      "testimonials.sourceId",
+      "testimonial_statuses.name as statusName",
+      "testimonials.createdAt",
+      "testimonials.updatedAt",
+      "testimonial_tags.name as tagName",
+      "testimonial_tags.color as tagColor",
+      "testimonial_tags.textColor as tagTextColor",
+      "testimonial_sources.id as sourceId",
+      "testimonial_sources.name as sourceName",
+    ])
+    .execute();
   console.log({ testimonials });
 
-  // const testimonials = await db.testimonial.findMany({
-  //   include: {
-  //     status: true,
-  //     tags: {
-  //       include: {
-  //         tag: true,
-  //       },
-  //     },
-  //     source: true,
-  //   },
-  // });
+  const approvedTestimonials = testimonials.filter(
+    (testimonial) => testimonial.statusName === "Approved"
+  );
 
-  // const approvedTestimonials = testimonials.filter(
-  //   (testimonial) => testimonial.status.name === "Approved"
-  // );
+  const pendingTestimonials = testimonials.filter(
+    (testimonial) => testimonial.statusName === "Pending"
+  );
 
-  // const pendingTestimonials = testimonials.filter(
-  //   (testimonial) => testimonial.status.name === "Pending"
-  // );
-
-  // const rejectedTestimonials = testimonials.filter(
-  //   (testimonial) => testimonial.status.name === "Rejected"
-  // );
+  const rejectedTestimonials = testimonials.filter(
+    (testimonial) => testimonial.statusName === "Rejected"
+  );
 
   return (
     <>

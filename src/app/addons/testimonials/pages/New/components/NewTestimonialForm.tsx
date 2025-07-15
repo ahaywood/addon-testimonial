@@ -23,21 +23,23 @@ import { Button } from "@/app/components/ui/button";
 import { ToggleGroup, ToggleGroupItem } from "@/app/components/ui/toggle-group";
 import { Check, Clock, X } from "lucide-react";
 import { Rating } from "../../../components/Rating";
-import { TestimonialSource, TestimonialTag } from "@generated/prisma";
 import { createTestimonial } from "../actions";
 import { toast } from "sonner";
 import { useState } from "react";
 import { namedLink } from "@/app/addons/admin/namedLinks";
 import { TESTIMONIAL_STATUS } from "../../../lib/helpers/testimonialStatus";
+import { getAllSourcesType, getAllTagsType } from "../NewPage";
 
 const NewTestimonialForm = ({
   allSources,
   allTags,
 }: {
-  allSources: TestimonialSource[];
-  allTags: TestimonialTag[];
+  allSources: getAllSourcesType[];
+  allTags: getAllTagsType[];
 }) => {
   const [status, setStatus] = useState<string>("3");
+
+  console.log({ allSources, allTags });
 
   const handleSubmit = async (formData: FormData) => {
     formData.append("statusId", status);
@@ -99,7 +101,7 @@ const NewTestimonialForm = ({
           {allSources.length > 0 && (
             <>
               <Label>Source</Label>
-              <Select name="sourceId">
+              {/* <Select name="sourceId">
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select a source" />
                 </SelectTrigger>
@@ -110,7 +112,7 @@ const NewTestimonialForm = ({
                     </SelectItem>
                   ))}
                 </SelectContent>
-              </Select>
+              </Select> */}
             </>
           )}
         </div>
@@ -187,7 +189,7 @@ const NewTestimonialForm = ({
         <Separator className="separator !mt-6 mb-4" />
 
         <section>
-          <MultiSelectCombobox
+          {/* <MultiSelectCombobox
             name="tags"
             label="Tags"
             placeholder="Select a tag"
@@ -199,7 +201,7 @@ const NewTestimonialForm = ({
               color: tag.color ?? undefined,
               textColor: tag.textColor ?? undefined,
             }))}
-          />
+          /> */}
         </section>
 
         <Separator className="separator !my-6" />
