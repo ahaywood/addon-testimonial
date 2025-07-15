@@ -1,16 +1,14 @@
 import { PageHeader } from "../../components/PageHeader";
 import { NewTestimonialForm } from "./components/NewTestimonialForm";
-import { getDb } from "../../db/db";
+import { db } from "../../db/db";
 
 const getAllSources = async () => {
-  const db = await getDb();
   return await db.selectFrom("testimonial_sources").selectAll().execute();
 };
 
 export type getAllSourcesType = Awaited<ReturnType<typeof getAllSources>>;
 
 const getAllTags = async () => {
-  const db = await getDb();
   return await db.selectFrom("testimonial_tags").selectAll().execute();
 };
 

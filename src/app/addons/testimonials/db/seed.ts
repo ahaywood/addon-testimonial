@@ -1,9 +1,6 @@
-import { defineScript } from "rwsdk/worker";
-import { getDb } from "./db";
+import { db } from "./db";
 
-export default defineScript(async () => {
-  const db = await getDb();
-
+export const seedTestimonials = async () => {
   // clean out the database
   await db.deleteFrom("testimonials").execute();
   await db.deleteFrom("testimonial_settings").execute();
@@ -43,4 +40,4 @@ export default defineScript(async () => {
   ]);
 
   console.log("🌱 Finished seeding");
-});
+};

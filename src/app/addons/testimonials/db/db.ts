@@ -16,14 +16,11 @@ export type TestimonialTag = TestimonialsDatabase["testimonial_tags"];
 export type TestimonialTagging = TestimonialsDatabase["testimonial_taggings"];
 export type User = TestimonialsDatabase["users"];
 
-export async function getDb() {
-  return createDb<TestimonialsDatabase>(
-    env.TESTIMONIALS_DURABLE_OBJECT,
-    "testimonials-database"
-  );
-}
+export const db = createDb<TestimonialsDatabase>(
+  env.TESTIMONIALS_DURABLE_OBJECT,
+  "testimonials-database"
+);
 
 export async function getAllTestimonials() {
-  const db = await getDb();
   return await db.selectFrom("testimonials").selectAll().execute();
 }

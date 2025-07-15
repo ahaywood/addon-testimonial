@@ -13,11 +13,9 @@ import { namedLink } from "@/app/addons/admin/namedLinks";
 // import { db } from "@/db";
 import { NoTestimonials } from "../../components/NoTestimonials";
 import { SearchForm } from "../../components/SearchForm";
-import { getAllTestimonials, getDb } from "../../db/db";
+import { getAllTestimonials, db } from "../../db/db";
 
 const DashboardPage = async () => {
-  // get all testimonials
-  const db = await getDb();
   const testimonials = await db
     .selectFrom("testimonials")
     .leftJoin(
