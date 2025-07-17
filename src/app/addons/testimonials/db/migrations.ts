@@ -68,7 +68,7 @@ export const migrations = {
 
         await db.schema
           .createTable("testimonial_tags")
-          .addColumn("id", "integer", (col) => col.primaryKey())
+          .addColumn("id", "integer", (col) => col.primaryKey().autoIncrement())
           .addColumn("name", "text", (col) => col.notNull())
           .addColumn("color", "text", (col) => col.notNull())
           .addColumn("textColor", "text", (col) => col.notNull())
@@ -100,7 +100,6 @@ export const migrations = {
     },
 
     async down(db) {
-      console.log("################## testimonials migrations down");
       await db.schema.dropTable("testimonials").execute();
       await db.schema.dropTable("testimonial_settings").execute();
       await db.schema.dropTable("testimonial_sources").execute();

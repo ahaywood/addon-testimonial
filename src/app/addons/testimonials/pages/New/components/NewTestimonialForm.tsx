@@ -101,7 +101,7 @@ const NewTestimonialForm = ({
           {allSources.length > 0 && (
             <>
               <Label>Source</Label>
-              {/* <Select name="sourceId">
+              <Select name="sourceId">
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select a source" />
                 </SelectTrigger>
@@ -112,7 +112,7 @@ const NewTestimonialForm = ({
                     </SelectItem>
                   ))}
                 </SelectContent>
-              </Select> */}
+              </Select>
             </>
           )}
         </div>
@@ -189,7 +189,7 @@ const NewTestimonialForm = ({
         <Separator className="separator !mt-6 mb-4" />
 
         <section>
-          {/* <MultiSelectCombobox
+          <MultiSelectCombobox
             name="tags"
             label="Tags"
             placeholder="Select a tag"
@@ -201,7 +201,7 @@ const NewTestimonialForm = ({
               color: tag.color ?? undefined,
               textColor: tag.textColor ?? undefined,
             }))}
-          /> */}
+          />
         </section>
 
         <Separator className="separator !my-6" />

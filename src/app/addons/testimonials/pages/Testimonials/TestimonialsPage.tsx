@@ -18,8 +18,8 @@ const TestimonialsPage = async () => {
   //     source: true,
   //   },
   // });
-  // const testimonials = await getAllTestimonials();
-  // console.log({ testimonials });
+  const testimonials = await getAllTestimonials();
+  console.log({ testimonials });
 
   return (
     <div>
@@ -34,13 +34,13 @@ const TestimonialsPage = async () => {
       <div className="grid gap-y-3 relative">
         <FilterBar />
 
-        {/* {testimonials.length > 0 ? (
+        {testimonials.length > 0 ? (
           testimonials.map((testimonial) => (
             <Testimonial key={testimonial.id} testimonial={testimonial} />
           ))
         ) : (
           <NoTestimonials />
-        )} */}
+        )}
       </div>
     </div>
   );
