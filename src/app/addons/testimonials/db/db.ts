@@ -35,13 +35,13 @@ export async function getAllTestimonials() {
       jsonObjectFrom(
         eb
           .selectFrom("testimonial_statuses")
-          .selectAll()
+          .select(["id", "name"])
           .whereRef("testimonial_statuses.id", "=", "testimonials.statusId")
       ).as("status"),
       jsonObjectFrom(
         eb
           .selectFrom("testimonial_sources")
-          .selectAll()
+          .select(["id", "name"])
           .whereRef("testimonial_sources.id", "=", "testimonials.sourceId")
       ).as("source"),
       jsonArrayFrom(
