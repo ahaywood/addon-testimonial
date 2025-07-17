@@ -1,4 +1,3 @@
-import { Kysely } from "kysely";
 import { type Migrations } from "rwsdk/db";
 
 export const migrations = {
@@ -105,6 +104,7 @@ export const migrations = {
     },
 
     async down(db) {
+      console.log("################## testimonials migrations down");
       await db.schema.dropTable("testimonials").execute();
       await db.schema.dropTable("testimonial_settings").execute();
       await db.schema.dropTable("testimonial_sources").execute();
