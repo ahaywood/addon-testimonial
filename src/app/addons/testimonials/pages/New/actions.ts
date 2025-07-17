@@ -1,6 +1,6 @@
 "use server";
 
-import { db } from "@/db";
+import { db } from "@/app/addons/testimonials/db/db";
 
 export const createTestimonial = async (formData: FormData) => {
   const fullName = formData.get("fullName") as string;
@@ -21,10 +21,16 @@ export const createTestimonial = async (formData: FormData) => {
 
   try {
     // format tags
-    const formattedTags = tags.split(",").map((tag) => tag.trim());
+    const formattedTags = (tags || "").split(",").map((tag) => tag.trim());
+    console.log({ formattedTags });
 
-    await db.testimonial.create({
-      data: {
+    const testimonialId = crypto.randomUUID();
+
+    await db
+      .insertInto("testimonials")
+      .values({
+        id: testimonialId,
+        avatar,
         fullName,
         email,
         company,
@@ -35,14 +41,22 @@ export const createTestimonial = async (formData: FormData) => {
         content,
         statusId: parseInt(statusId),
         featured,
-        date,
-        tags: {
-          create: formattedTags.map((tagId) => ({
-            tagId: parseInt(tagId),
-          })),
-        },
-      },
-    });
+        date: new Date(date).toISOString(),
+        // todo(justinvdm, 2025-07-17): Values with default values should not need to be set
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      })
+      .execute();
+
+    await db
+      .insertInto("testimonial_taggings")
+      .values(
+        formattedTags.map((tag: string) => ({
+          testimonialId,
+          tagId: parseInt(tag),
+        }))
+      )
+      .execute();
   } catch (error) {
     console.error(error);
     return { success: false, error: error };

@@ -45,18 +45,9 @@ import {
 import { TESTIMONIAL_STATUS } from "../lib/helpers/testimonialStatus";
 import { getSourceIcon } from "../lib/helpers/getSourceIcon";
 import { namedLink } from "../../admin/namedLinks";
+import { getAllTestimonials } from "../db";
 
-type TestimonialType = Prisma.TestimonialGetPayload<{
-  include: {
-    status: true;
-    tags: {
-      include: {
-        tag: true;
-      };
-    };
-    source: true;
-  };
-}>;
+type TestimonialType = Awaited<ReturnType<typeof getAllTestimonials>>[number];
 
 const Testimonial = ({ testimonial }: { testimonial: TestimonialType }) => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -222,7 +213,7 @@ const Testimonial = ({ testimonial }: { testimonial: TestimonialType }) => {
         <div className="flex items-center justify-between text-muted-foreground text-sm">
           <div className="flex items-center gap-x-2">
             <Calendar size={16} />
-            {testimonial.date?.toLocaleDateString("en-US", {
+            {new Date(testimonial.date).toLocaleDateString("en-US", {
               month: "long",
               day: "numeric",
               year: "numeric",
@@ -235,11 +226,11 @@ const Testimonial = ({ testimonial }: { testimonial: TestimonialType }) => {
               <Badge
                 key={tagging.id}
                 style={{
-                  backgroundColor: tagging.tag.color || "var(--color-gray-200)",
-                  color: tagging.tag.textColor || "var(--color-gray-800)",
+                  backgroundColor: tagging.color || "var(--color-gray-200)",
+                  color: tagging.textColor || "var(--color-gray-800)",
                 }}
               >
-                {tagging.tag.name}
+                {tagging.name}
               </Badge>
             ))}
 

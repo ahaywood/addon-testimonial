@@ -1,4 +1,3 @@
-import { Kysely } from "kysely";
 import { type Migrations } from "rwsdk/db";
 
 export const migrations = {
@@ -69,7 +68,7 @@ export const migrations = {
 
         await db.schema
           .createTable("testimonial_tags")
-          .addColumn("id", "integer", (col) => col.primaryKey())
+          .addColumn("id", "integer", (col) => col.primaryKey().autoIncrement())
           .addColumn("name", "text", (col) => col.notNull())
           .addColumn("color", "text", (col) => col.notNull())
           .addColumn("textColor", "text", (col) => col.notNull())
@@ -83,10 +82,6 @@ export const migrations = {
           .addColumn("tagId", "integer", (col) =>
             col.notNull().references("testimonial_tags.id")
           )
-          .execute(),
-
-        await db.schema
-          .alterTable("testimonial_taggings")
           .addUniqueConstraint("testimonial_tag_unique", [
             "testimonialId",
             "tagId",
