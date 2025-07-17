@@ -2,6 +2,7 @@ import { env } from "cloudflare:workers";
 
 import debug from "rwsdk/debug";
 import { Kysely, Selectable, sql } from "kysely";
+import { jsonObjectFrom, jsonArrayFrom } from "kysely/helpers/sqlite";
 import { type Database, createDb } from "rwsdk/db";
 import { migrations } from "./migrations";
 
@@ -27,62 +28,44 @@ export const db = createDb<TestimonialsDatabase>(
 );
 
 export async function getAllTestimonials() {
-  const result = await db
+  const testimonials = await db
     .selectFrom("testimonials")
-    .innerJoin(
-      "testimonial_statuses",
-      "testimonials.statusId",
-      "testimonial_statuses.id"
-    )
-    .innerJoin(
-      "testimonial_sources",
-      "testimonials.sourceId",
-      "testimonial_sources.id"
-    )
+    .selectAll("testimonials")
     .select((eb) => [
-      "testimonials.id",
-      "testimonials.fullName",
-      "testimonials.email",
-      "testimonials.company",
-      "testimonials.jobTitle",
-      "testimonials.featured",
-      "testimonials.date",
-      "testimonials.avatar",
-      "testimonials.url",
-      "testimonials.content",
-      "testimonials.rating",
-      "testimonials.sourceId",
-      "testimonials.statusId",
-      "testimonials.featured",
-      sql<string>`json_object('id', testimonial_statuses.id, 'name', testimonial_statuses.name)`.as(
-        "status"
-      ),
-      sql<string>`json_object('id', testimonial_sources.id, 'name', testimonial_sources.name)`.as(
-        "source"
-      ),
-      sql<string>`(
-        SELECT 
-          json_group_array(
-            json_object(
-              'id', testimonial_tags.id, 
-              'name', testimonial_tags.name, 
-              'color', testimonial_tags.color, 
-              'textColor', testimonial_tags.textColor
-            )
-          ) 
-        FROM testimonial_taggings
-        JOIN testimonial_tags ON testimonial_taggings.tagId = testimonial_tags.id
-        WHERE testimonial_taggings.testimonialId = testimonials.id
-      )`.as("tags"),
+      jsonObjectFrom(
+        eb
+          .selectFrom("testimonial_statuses")
+          .selectAll()
+          .whereRef("testimonial_statuses.id", "=", "testimonials.statusId")
+      ).as("status"),
+      jsonObjectFrom(
+        eb
+          .selectFrom("testimonial_sources")
+          .selectAll()
+          .whereRef("testimonial_sources.id", "=", "testimonials.sourceId")
+      ).as("source"),
+      jsonArrayFrom(
+        eb
+          .selectFrom("testimonial_taggings")
+          .innerJoin(
+            "testimonial_tags",
+            "testimonial_tags.id",
+            "testimonial_taggings.tagId"
+          )
+          .select([
+            "testimonial_tags.id",
+            "testimonial_tags.name",
+            "testimonial_tags.color",
+            "testimonial_tags.textColor",
+          ])
+          .whereRef(
+            "testimonial_taggings.testimonialId",
+            "=",
+            "testimonials.id"
+          )
+      ).as("tags"),
     ])
     .execute();
-
-  const testimonials = result.map((row) => ({
-    ...row,
-    status: row.status ? (JSON.parse(row.status) as TestimonialStatus) : null,
-    source: row.source ? (JSON.parse(row.source) as TestimonialSource) : null,
-    tags: row.tags ? (JSON.parse(row.tags) as TestimonialTag[]) : [],
-  }));
 
   return testimonials;
 }
