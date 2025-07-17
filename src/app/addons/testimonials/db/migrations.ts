@@ -115,4 +115,21 @@ export const migrations = {
       await db.schema.dropTable("users").execute();
     },
   },
+  //"002_test": {
+  //  async up(db) {
+  //    console.log("################## testimonials migrations up 002");
+  //    const r = [
+  //      await db.schema
+  //        .createTable("sometable")
+  //        .addColumn("id", "text", (col) => col.primaryKey())
+  //        .execute(),
+  //    ];
+  //    throw new Error("test error");
+  //    return r;
+  //  },
+  //  async down(db) {
+  //    console.log("################## testimonials migrations down 002");
+  //    return [await db.schema.dropTable("sometable").execute()];
+  //  },
+  //},
 } satisfies Migrations;
