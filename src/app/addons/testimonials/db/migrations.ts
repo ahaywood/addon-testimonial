@@ -82,10 +82,6 @@ export const migrations = {
           .addColumn("tagId", "integer", (col) =>
             col.notNull().references("testimonial_tags.id")
           )
-          .execute(),
-
-        await db.schema
-          .alterTable("testimonial_taggings")
           .addUniqueConstraint("testimonial_tag_unique", [
             "testimonialId",
             "tagId",
